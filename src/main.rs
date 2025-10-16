@@ -1,44 +1,39 @@
-use winit::{
-    application::ApplicationHandler, event::WindowEvent, event_loop::{ControlFlow, EventLoop}, window::Window
-};
-
-#[derive(Default)]
-struct App {
-    window: Option<Window>,
-}
-
-impl ApplicationHandler for App {
-    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.window = Some(event_loop.create_window(Window::default_attributes()).unwrap());
-    }
-
-    fn window_event(
-        &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        window_id: winit::window::WindowId,
-        event: winit::event::WindowEvent,
-    ) {
-        match event {
-            WindowEvent::CloseRequested => {
-                println!("The close button was pressed; stopping.");
-                event_loop.exit();                
-            }
-            WindowEvent::RedrawRequested => {
-                self.window.as_ref().unwrap().request_redraw();
-            }
-            _ => ()
-        }
-    }
-}
+use glad_gl::gl;
+use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
 
 fn main() {
-    let event_loop = EventLoop::new().unwrap();
+    // Initialize GLFW
+    let mut glfw_data = glfw::init_no_callbacks().unwrap();
 
-    // ControlFlow::Poll continuously runs the event loop, even if the OS
-    // hasn't dispatched any events. This is ideal for games and other similar
-    // applications.
-    event_loop.set_control_flow(ControlFlow::Poll);
+    // Ask for version 3.3 and the core profile
+    glfw_data.window_hint(WindowHint::ContextVersionMajor(3));
+    glfw_data.window_hint(WindowHint::ContextVersionMinor(3));
+    glfw_data.window_hint(WindowHint::OpenGlProfile(OpenGlProfileHint::Core));
 
-    let mut app = App::default();
-    event_loop.run_app(&mut app).unwrap();
+    // Create a window object
+    let (mut window, events_receiver) = glfw_data
+        .create_window(800, 600, "LearnOpenGL", WindowMode::Windowed)
+        .unwrap();
+
+    window.make_current();
+
+    gl::load(|e| glfw_data.get_proc_address_raw(e).unwrap() as *const std::os::raw::c_void);
+
+    unsafe {gl::Viewport(0, 0, 800, 600);}
+
+    // TODO: register resize callback
+
+    while !window.should_close() {
+        window.swap_buffers();
+        glfw_data.poll_events();
+
+        for (_, event) in glfw::flush_messages(&events_receiver) {
+            match event {
+                WindowEvent::Key(Key::Escape, _, glfw::Action::Press, _) => {
+                    window.set_should_close(true);
+                }
+                _ => {}
+            }
+        }
+    }
 }

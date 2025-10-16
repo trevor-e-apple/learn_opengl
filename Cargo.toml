@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-glow = "0.16.0"
-winit = "0.30.12"
+glfw = "0.60.0"
+glad-gl = { path = "./glad-gl" }
