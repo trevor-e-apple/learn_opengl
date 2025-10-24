@@ -56,10 +56,14 @@ fn main() {
         // Build and compile our vertex shader
         let vertex_shader = unsafe {
             let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
+            let vertex_shader_source = {
+                let boxed_source_ptr = Box::new(VERTEX_SHADER_SOURCE.as_ptr());
+                Box::into_raw(boxed_source_ptr)
+            };
             gl::ShaderSource(
                 vertex_shader,
                 1,
-                VERTEX_SHADER_SOURCE.as_ptr() as *const *const GLchar,
+                vertex_shader_source as *const *const GLchar,
                 null(),
             );
             gl::CompileShader(vertex_shader);
@@ -86,10 +90,14 @@ fn main() {
         // Build and compile our fragment shader
         let fragment_shader = unsafe {
             let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
+            let fragment_shader_source = {
+                let boxed_source_ptr = Box::new(FRAGMENT_SHADER_SOURCE.as_ptr());
+                Box::into_raw(boxed_source_ptr)
+            };
             gl::ShaderSource(
                 fragment_shader,
                 1,
-                FRAGMENT_SHADER_SOURCE.as_ptr() as *const *const i8,
+                fragment_shader_source as *const *const GLchar,
                 null(),
             );
             gl::CompileShader(fragment_shader);
@@ -127,7 +135,7 @@ fn main() {
 
             let mut success: i32 = 0;
             let mut info_log: [u8; 512] = zeroed();
-            gl::GetProgramiv(shader_program, gl::COMPILE_STATUS, &mut success as *mut i32);
+            gl::GetProgramiv(shader_program, gl::LINK_STATUS, &mut success as *mut i32);
             if success == 0 {
                 gl::GetProgramInfoLog(
                     shader_program,
@@ -152,17 +160,23 @@ fn main() {
     };
 
     // Vertex input
-    let vertices: [f32; 12] = [
-        0.5, 0.5, 0.0, // top right
-        0.5, -0.5, 0.0, // bottom right
-        -0.5, -0.5, 0.0, // bottom left
-        -0.5, 0.5, 0.0, //top left
+    let vertices: [f32; 9] = [
+        -0.5, -0.5, 0.0, // left
+        0.5, -0.5, 0.0, // right
+        0.0, 0.5, 0.0, // top
     ];
-    let vbo = {
+    let vao = {
         let mut vbo: GLuint = 0;
+        let mut vao: GLuint = 0;
         unsafe {
+            // Generate a vertex array object
+            gl::GenVertexArrays(1, &mut vao as *mut GLuint);
+
             // Generate a vertex buffer object
             gl::GenBuffers(1, &mut vbo as *mut GLuint);
+
+            // Bind vertex array object first
+            gl::BindVertexArray(vao);
 
             // Set vbo type to ARRAY_BUFFER for vertices
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
@@ -185,13 +199,10 @@ fn main() {
             );
             gl::EnableVertexAttribArray(0);
         }
-        vbo
+        vao
     };
 
     while !window.should_close() {
-        window.swap_buffers();
-        glfw_data.poll_events();
-
         for (_, event) in glfw::flush_messages(&events_receiver) {
             match event {
                 WindowEvent::Key(Key::Escape, _, glfw::Action::Press, _) => {
@@ -200,5 +211,14 @@ fn main() {
                 _ => {}
             }
         }
+
+        unsafe {
+            gl::UseProgram(shader_program);
+            gl::BindVertexArray(vao);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+        }
+
+        window.swap_buffers();
+        glfw_data.poll_events();
     }
 }
