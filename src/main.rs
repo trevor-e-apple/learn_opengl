@@ -160,13 +160,19 @@ fn main() {
     };
 
     // Vertex input
-    let vertices: [f32; 9] = [
-        -0.5, -0.5, 0.0, // left
-        0.5, -0.5, 0.0, // right
-        0.0, 0.5, 0.0, // top
+    let vertices: [f32; 12] = [
+        0.5, 0.5, 0.0, // top right
+        0.5, -0.5, 0.0, // bottom right
+        -0.5, -0.5, 0.0, // bottom left
+        -0.5, 0.5, 0.0, // top left
+    ];
+    let indices: [i32; 6] = [
+        0, 1, 3, // first triangle
+        1, 2, 3, // second triangle
     ];
     let vao = {
         let mut vbo: GLuint = 0;
+        let mut ebo: GLuint = 0;
         let mut vao: GLuint = 0;
         unsafe {
             // Generate a vertex array object
@@ -174,6 +180,9 @@ fn main() {
 
             // Generate a vertex buffer object
             gl::GenBuffers(1, &mut vbo as *mut GLuint);
+
+            // Generate an element buffer object
+            gl::GenBuffers(1, &mut ebo as *mut GLuint);
 
             // Bind vertex array object first
             gl::BindVertexArray(vao);
@@ -187,6 +196,14 @@ fn main() {
                 (size_of::<f32>() * vertices.len()) as isize,
                 vertices.as_ptr() as *const c_void,
                 gl::STATIC_DRAW, // Data is set once and used many times
+            );
+
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            gl::BufferData(
+                gl::ELEMENT_ARRAY_BUFFER,
+                (size_of::<i32>() * indices.len()) as isize,
+                indices.as_ptr() as *const c_void,
+                gl::STATIC_DRAW,
             );
 
             gl::VertexAttribPointer(
@@ -215,7 +232,7 @@ fn main() {
         unsafe {
             gl::UseProgram(shader_program);
             gl::BindVertexArray(vao);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
         }
 
         window.swap_buffers();
