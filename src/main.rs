@@ -219,6 +219,10 @@ fn main() {
         vao
     };
 
+    unsafe {
+        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+    };
+
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
             match event {
