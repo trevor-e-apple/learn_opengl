@@ -160,15 +160,18 @@ fn main() {
     };
 
     // Vertex input
-    let vertices: [f32; 12] = [
-        0.5, 0.5, 0.0, // top right
-        0.5, -0.5, 0.0, // bottom right
-        -0.5, -0.5, 0.0, // bottom left
-        -0.5, 0.5, 0.0, // top left
+    let vertices: [f32; 18] = [
+        -0.5, 0.0, 0.0,
+        -1.0, -0.5, 0.0,
+        0.0, -0.5, 0.0,
+
+        0.5, 0.0, 0.0,
+        1.0, -0.5, 0.0,
+        0.0, -0.5, 0.0,
     ];
     let indices: [i32; 6] = [
-        0, 1, 3, // first triangle
-        1, 2, 3, // second triangle
+        0, 1, 2, // first triangle
+        3, 4, 5, // second triangle
     ];
     let vao = {
         let mut vbo: GLuint = 0;
@@ -217,10 +220,6 @@ fn main() {
             gl::EnableVertexAttribArray(0);
         }
         vao
-    };
-
-    unsafe {
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
     };
 
     while !window.should_close() {
