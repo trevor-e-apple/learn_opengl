@@ -160,53 +160,61 @@ fn main() {
     };
 
     // Vertex input
-    let vertices: [f32; 18] = [
+    let triangle_one: [f32; 9] = [
         -0.5, 0.0, 0.0,
         -1.0, -0.5, 0.0,
         0.0, -0.5, 0.0,
-
+    ];
+    let triangle_two: [f32; 9] = [
         0.5, 0.0, 0.0,
         1.0, -0.5, 0.0,
         0.0, -0.5, 0.0,
     ];
-    let indices: [i32; 6] = [
-        0, 1, 2, // first triangle
-        3, 4, 5, // second triangle
-    ];
-    let vao = {
-        let mut vbo: GLuint = 0;
-        let mut ebo: GLuint = 0;
-        let mut vao: GLuint = 0;
+    let vaos = {
+        let mut vbos: [GLuint; 2] = [0, 0];
+        let mut vaos: [GLuint; 2] = [0, 0];
         unsafe {
             // Generate a vertex array object
-            gl::GenVertexArrays(1, &mut vao as *mut GLuint);
+            gl::GenVertexArrays(2, vaos.as_mut_ptr() as *mut GLuint);
 
             // Generate a vertex buffer object
-            gl::GenBuffers(1, &mut vbo as *mut GLuint);
-
-            // Generate an element buffer object
-            gl::GenBuffers(1, &mut ebo as *mut GLuint);
+            gl::GenBuffers(2, vbos.as_mut_ptr() as *mut GLuint);
 
             // Bind vertex array object first
-            gl::BindVertexArray(vao);
+            gl::BindVertexArray(vaos[0]);
 
             // Set vbo type to ARRAY_BUFFER for vertices
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbos[0]);
 
             // Copy the data into the buffer
             gl::BufferData(
                 gl::ARRAY_BUFFER,
-                (size_of::<f32>() * vertices.len()) as isize,
-                vertices.as_ptr() as *const c_void,
+                (size_of::<f32>() * triangle_one.len()) as isize,
+                triangle_one.as_ptr() as *const c_void,
                 gl::STATIC_DRAW, // Data is set once and used many times
             );
 
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);
+            gl::VertexAttribPointer(
+                0,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                (3 * size_of::<f32>()) as i32,
+                0 as *const c_void,
+            );
+            gl::EnableVertexAttribArray(0);
+
+            // Bind vertex array object first
+            gl::BindVertexArray(vaos[1]);
+            // Set vbo type to ARRAY_BUFFER for vertices
+            gl::BindBuffer(gl::ARRAY_BUFFER, vbos[1]);
+
+            // Copy the data into the buffer
             gl::BufferData(
-                gl::ELEMENT_ARRAY_BUFFER,
-                (size_of::<i32>() * indices.len()) as isize,
-                indices.as_ptr() as *const c_void,
-                gl::STATIC_DRAW,
+                gl::ARRAY_BUFFER,
+                (size_of::<f32>() * triangle_two.len()) as isize,
+                triangle_two.as_ptr() as *const c_void,
+                gl::STATIC_DRAW, // Data is set once and used many times
             );
 
             gl::VertexAttribPointer(
@@ -219,7 +227,7 @@ fn main() {
             );
             gl::EnableVertexAttribArray(0);
         }
-        vao
+        vaos
     };
 
     while !window.should_close() {
@@ -234,8 +242,11 @@ fn main() {
 
         unsafe {
             gl::UseProgram(shader_program);
-            gl::BindVertexArray(vao);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
+            gl::BindVertexArray(vaos[0]);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
+            gl::BindVertexArray(vaos[1]);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
 
         window.swap_buffers();
