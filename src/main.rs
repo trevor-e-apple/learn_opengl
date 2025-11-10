@@ -12,12 +12,20 @@ const VERTEX_SHADER_SOURCE: &str = concat!(
     "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n",
     "}\n\0",
 );
-const FRAGMENT_SHADER_SOURCE: &str = concat!(
+const FRAGMENT_SHADER_ONE_SOURCE: &str = concat!(
     "#version 330 core\n",
     "out vec4 FragColor;\n",
     "void main()\n",
     "{\n",
     "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n",
+    "}\n\0"
+);
+const FRAGMENT_SHADER_TWO_SOURCE: &str = concat!(
+    "#version 330 core\n",
+    "out vec4 FragColor;\n",
+    "void main()\n",
+    "{\n",
+    "   FragColor = vec4(1.0f, 1.0f, 0.0f, 1.0f);\n",
     "}\n\0"
 );
 
@@ -52,7 +60,7 @@ fn main() {
     // TODO: register resize callback
 
     // Create the shader program
-    let shader_program = {
+    let shader_programs = {
         // Build and compile our vertex shader
         let vertex_shader = unsafe {
             let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
@@ -88,10 +96,47 @@ fn main() {
         };
 
         // Build and compile our fragment shader
-        let fragment_shader = unsafe {
+        let fragment_shader_one = unsafe {
             let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
             let fragment_shader_source = {
-                let boxed_source_ptr = Box::new(FRAGMENT_SHADER_SOURCE.as_ptr());
+                let boxed_source_ptr = Box::new(FRAGMENT_SHADER_ONE_SOURCE.as_ptr());
+                Box::into_raw(boxed_source_ptr)
+            };
+            gl::ShaderSource(
+                fragment_shader,
+                1,
+                fragment_shader_source as *const *const GLchar,
+                null(),
+            );
+            gl::CompileShader(fragment_shader);
+
+            // Check for compilation errors
+            let mut success: i32 = 0;
+            let mut info_log: [u8; 512] = zeroed();
+            gl::GetShaderiv(
+                fragment_shader,
+                gl::COMPILE_STATUS,
+                &mut success as *mut i32,
+            );
+            if success == 0 {
+                gl::GetShaderInfoLog(
+                    fragment_shader,
+                    512,
+                    0 as *mut GLsizei,
+                    info_log.as_mut_ptr() as *mut GLchar,
+                );
+                eprintln!("Fragment shader compilation error");
+                eprintln!("Error info: {}", str::from_utf8(&info_log).unwrap());
+                panic!("panic");
+            }
+
+            fragment_shader
+        };
+
+        let fragment_shader_two = unsafe {
+            let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
+            let fragment_shader_source = {
+                let boxed_source_ptr = Box::new(FRAGMENT_SHADER_TWO_SOURCE.as_ptr());
                 Box::into_raw(boxed_source_ptr)
             };
             gl::ShaderSource(
@@ -126,11 +171,36 @@ fn main() {
         };
 
         // Create the shader program
-        let shader_program = unsafe {
+        let shader_program_one = unsafe {
             let shader_program = gl::CreateProgram();
 
             gl::AttachShader(shader_program, vertex_shader);
-            gl::AttachShader(shader_program, fragment_shader);
+            gl::AttachShader(shader_program, fragment_shader_one);
+            gl::LinkProgram(shader_program);
+
+            let mut success: i32 = 0;
+            let mut info_log: [u8; 512] = zeroed();
+            gl::GetProgramiv(shader_program, gl::LINK_STATUS, &mut success as *mut i32);
+            if success == 0 {
+                gl::GetProgramInfoLog(
+                    shader_program,
+                    512,
+                    0 as *mut GLsizei,
+                    info_log.as_mut_ptr() as *mut GLchar,
+                );
+                eprintln!("Shader program linking error");
+                eprintln!("Error info: {}", str::from_utf8(&info_log).unwrap());
+                panic!("panic");
+            }
+
+            shader_program
+        };
+
+        let shader_program_two = unsafe {
+            let shader_program = gl::CreateProgram();
+
+            gl::AttachShader(shader_program, vertex_shader);
+            gl::AttachShader(shader_program, fragment_shader_two);
             gl::LinkProgram(shader_program);
 
             let mut success: i32 = 0;
@@ -153,10 +223,11 @@ fn main() {
 
         unsafe {
             gl::DeleteShader(vertex_shader);
-            gl::DeleteShader(fragment_shader);
+            gl::DeleteShader(fragment_shader_one);
+            gl::DeleteShader(fragment_shader_two);
         }
 
-        shader_program
+        (shader_program_one, shader_program_two)
     };
 
     // Vertex input
@@ -241,10 +312,11 @@ fn main() {
         }
 
         unsafe {
-            gl::UseProgram(shader_program);
+            gl::UseProgram(shader_programs.0);
             gl::BindVertexArray(vaos[0]);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
+            gl::UseProgram(shader_programs.1);
             gl::BindVertexArray(vaos[1]);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
