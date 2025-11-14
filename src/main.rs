@@ -1,33 +1,11 @@
-use std::{
-    ffi::c_void,
-    mem::zeroed,
-    ptr::null,
-};
+mod shader;
 
-use glad_gl::gl::{self, GLchar, GLsizei, GLuint};
+use std::{ffi::c_void, path::Path};
+
+use glad_gl::gl::{self, GLuint};
 use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
 
-// Vertex shader source is in source code for now
-const VERTEX_SHADER_SOURCE: &str = concat!(
-    "#version 330 core\n",
-    "layout (location = 0) in vec3 aPos;\n",
-    "layout (location = 1) in vec3 aColor;\n",
-    "out vec3 ourColor;\n",
-    "void main()\n",
-    "{\n",
-    "   gl_Position = vec4(aPos, 1.0);\n",
-    "   ourColor = aColor;\n",
-    "}\n\0",
-);
-const FRAGMENT_SHADER_ONE_SOURCE: &str = concat!(
-    "#version 330 core\n",
-    "in vec3 ourColor;\n",
-    "out vec4 FragColor;\n",
-    "void main()\n",
-    "{\n",
-    "   FragColor = vec4(ourColor, 1.0);\n",
-    "}\n\0"
-);
+use crate::shader::ShaderProgram;
 
 fn main() {
     // Initialize GLFW and window
@@ -58,119 +36,13 @@ fn main() {
     };
 
     // TODO: register resize callback
-
-    // Create the shader program
-    let shader_program = {
-        // Build and compile our vertex shader
-        let vertex_shader = unsafe {
-            let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-            let vertex_shader_source = {
-                let boxed_source_ptr = Box::new(VERTEX_SHADER_SOURCE.as_ptr());
-                Box::into_raw(boxed_source_ptr)
-            };
-            gl::ShaderSource(
-                vertex_shader,
-                1,
-                vertex_shader_source as *const *const GLchar,
-                null(),
-            );
-            gl::CompileShader(vertex_shader);
-
-            // Check for compilation errors
-            let mut success: i32 = 0;
-            let mut info_log: [u8; 512] = zeroed();
-            gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success as *mut i32);
-            if success == 0 {
-                gl::GetShaderInfoLog(
-                    vertex_shader,
-                    512,
-                    0 as *mut GLsizei,
-                    info_log.as_mut_ptr() as *mut GLchar,
-                );
-                eprintln!("Vertex shader compilation error");
-                eprintln!("Error info: {}", str::from_utf8(&info_log).unwrap());
-                panic!("panic");
-            }
-
-            vertex_shader
-        };
-
-        // Build and compile our fragment shader
-        let fragment_shader_one = unsafe {
-            let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-            let fragment_shader_source = {
-                let boxed_source_ptr = Box::new(FRAGMENT_SHADER_ONE_SOURCE.as_ptr());
-                Box::into_raw(boxed_source_ptr)
-            };
-            gl::ShaderSource(
-                fragment_shader,
-                1,
-                fragment_shader_source as *const *const GLchar,
-                null(),
-            );
-            gl::CompileShader(fragment_shader);
-
-            // Check for compilation errors
-            let mut success: i32 = 0;
-            let mut info_log: [u8; 512] = zeroed();
-            gl::GetShaderiv(
-                fragment_shader,
-                gl::COMPILE_STATUS,
-                &mut success as *mut i32,
-            );
-            if success == 0 {
-                gl::GetShaderInfoLog(
-                    fragment_shader,
-                    512,
-                    0 as *mut GLsizei,
-                    info_log.as_mut_ptr() as *mut GLchar,
-                );
-                eprintln!("Fragment shader compilation error");
-                eprintln!("Error info: {}", str::from_utf8(&info_log).unwrap());
-                panic!("panic");
-            }
-
-            fragment_shader
-        };
-
-        // Create the shader program
-        let shader_program = unsafe {
-            let shader_program = gl::CreateProgram();
-
-            gl::AttachShader(shader_program, vertex_shader);
-            gl::AttachShader(shader_program, fragment_shader_one);
-            gl::LinkProgram(shader_program);
-
-            let mut success: i32 = 0;
-            let mut info_log: [u8; 512] = zeroed();
-            gl::GetProgramiv(shader_program, gl::LINK_STATUS, &mut success as *mut i32);
-            if success == 0 {
-                gl::GetProgramInfoLog(
-                    shader_program,
-                    512,
-                    0 as *mut GLsizei,
-                    info_log.as_mut_ptr() as *mut GLchar,
-                );
-                eprintln!("Shader program linking error");
-                eprintln!("Error info: {}", str::from_utf8(&info_log).unwrap());
-                panic!("panic");
-            }
-
-            shader_program
-        };
-
-        unsafe {
-            gl::DeleteShader(vertex_shader);
-            gl::DeleteShader(fragment_shader_one);
-        }
-
-        shader_program
-    };
+    let shader_program =
+        ShaderProgram::new(Path::new("./src/shader.vs"), Path::new("./src/shader.fs"));
 
     // Vertex input
     let triangle_one: [f32; 18] = [
         // 3 position, 3 color
-        0.5, -0.5, 0.0, 1.0, 0.0, 0.0,// Vertex 1
+        0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // Vertex 1
         -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // Vertex 2
         0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // Vertex 3
     ];
@@ -238,7 +110,7 @@ fn main() {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
-            gl::UseProgram(shader_program);
+            shader_program.use_program();
             gl::BindVertexArray(vaos[0]);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
