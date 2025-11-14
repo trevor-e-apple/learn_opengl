@@ -229,7 +229,7 @@ fn main() {
                 gl::GetUniformLocation(shader_program, "ourColor\0".as_ptr() as *const GLchar);
             let green_value = {
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-                let now_millis = (2.0 * f64::consts::PI * (now.as_millis() as f64)) / 1000.0;
+                let now_millis = (2.0 * f64::consts::PI * (now.as_millis() as f64)) / 1000;
                 ((now_millis.sin() / 2.0) + 0.5) as f32
             };
             gl::Uniform4f(uniform_location, 0.0, green_value, 0.0, 1.0);
