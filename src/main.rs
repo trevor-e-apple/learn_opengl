@@ -1,9 +1,7 @@
 use std::{
-    f64,
     ffi::c_void,
     mem::zeroed,
     ptr::null,
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 use glad_gl::gl::{self, GLchar, GLsizei, GLuint};
@@ -13,18 +11,21 @@ use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, Windo
 const VERTEX_SHADER_SOURCE: &str = concat!(
     "#version 330 core\n",
     "layout (location = 0) in vec3 aPos;\n",
+    "layout (location = 1) in vec3 aColor;\n",
+    "out vec3 ourColor;\n",
     "void main()\n",
     "{\n",
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n",
+    "   gl_Position = vec4(aPos, 1.0);\n",
+    "   ourColor = aColor;\n",
     "}\n\0",
 );
 const FRAGMENT_SHADER_ONE_SOURCE: &str = concat!(
     "#version 330 core\n",
+    "in vec3 ourColor;\n",
     "out vec4 FragColor;\n",
-    "uniform vec4 ourColor;\n", // We set this variable in our opengl code
     "void main()\n",
     "{\n",
-    "   FragColor = ourColor;\n",
+    "   FragColor = vec4(ourColor, 1.0);\n",
     "}\n\0"
 );
 
@@ -167,10 +168,11 @@ fn main() {
     };
 
     // Vertex input
-    let triangle_one: [f32; 9] = [
-        -0.5, 0.0, 0.0, // Vertex 1
-        -1.0, -0.5, 0.0, // Vertex 2
-        0.0, -0.5, 0.0, // Vertex 3
+    let triangle_one: [f32; 18] = [
+        // 3 position, 3 color
+        0.5, -0.5, 0.0, 1.0, 0.0, 0.0,// Vertex 1
+        -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // Vertex 2
+        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // Vertex 3
     ];
     let vaos = {
         let mut vbos: [GLuint; 2] = [0, 0];
@@ -196,15 +198,27 @@ fn main() {
                 gl::STATIC_DRAW, // Data is set once and used many times
             );
 
+            // position attribute
             gl::VertexAttribPointer(
                 0,
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (3 * size_of::<f32>()) as i32,
+                (6 * size_of::<f32>()) as i32,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
+
+            // color attribute
+            gl::VertexAttribPointer(
+                1,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                (6 * size_of::<f32>()) as i32,
+                (3 * size_of::<f32>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(1);
         }
         vaos
     };
@@ -225,14 +239,6 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             gl::UseProgram(shader_program);
-            let uniform_location =
-                gl::GetUniformLocation(shader_program, "ourColor\0".as_ptr() as *const GLchar);
-            let green_value = {
-                let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-                let now_millis = (2.0 * f64::consts::PI * (now.as_millis() as f64)) / 1000;
-                ((now_millis.sin() / 2.0) + 0.5) as f32
-            };
-            gl::Uniform4f(uniform_location, 0.0, green_value, 0.0, 1.0);
             gl::BindVertexArray(vaos[0]);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
