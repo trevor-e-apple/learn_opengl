@@ -41,15 +41,21 @@ fn main() {
         ShaderProgram::new(Path::new("./src/shader.vs"), Path::new("./src/shader.fs"));
 
     // Vertex input
-    let triangle_one: [f32; 18] = [
-        // 3 position, 3 color
-        0.5, -0.5, 0.0, 1.0, 0.0, 0.0, // Vertex 1
-        -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // Vertex 2
-        0.0, 0.5, 0.0, 0.0, 0.0, 1.0, // Vertex 3
+    let triangle_one: [f32; 32] = [
+        // 3 position, 3 color, 2 texture coordinates
+        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
+        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
+        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+    ];
+    let indices: [i32; 6] = [
+        0, 1, 3, // first triangle
+        1, 2, 3, // second triangle
     ];
     let vaos = {
         let mut vbos: [GLuint; 2] = [0, 0];
         let mut vaos: [GLuint; 2] = [0, 0];
+        let mut ebos: [GLuint; 2] = [0, 0];
         unsafe {
             // Generate a vertex array object
             gl::GenVertexArrays(2, vaos.as_mut_ptr() as *mut GLuint);
@@ -71,13 +77,22 @@ fn main() {
                 gl::STATIC_DRAW, // Data is set once and used many times
             );
 
+            gl::GenBuffers(2, ebos.as_mut_ptr() as *mut GLuint);
+            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebos[0]);
+            gl::BufferData(
+                gl::ELEMENT_ARRAY_BUFFER,
+                (size_of::<i32>() * indices.len()) as isize,
+                indices.as_ptr() as *const c_void,
+                gl::STATIC_DRAW,
+            );
+
             // position attribute
             gl::VertexAttribPointer(
                 0,
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (6 * size_of::<f32>()) as i32,
+                (8 * size_of::<f32>()) as i32,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
@@ -88,8 +103,19 @@ fn main() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (6 * size_of::<f32>()) as i32,
+                (8 * size_of::<f32>()) as i32,
                 (3 * size_of::<f32>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(1);
+
+            // texture attribute
+            gl::VertexAttribPointer(
+                2,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                (8 * size_of::<f32>()) as i32,
+                (6 * size_of::<f32>()) as *const c_void,
             );
             gl::EnableVertexAttribArray(1);
         }
@@ -140,8 +166,9 @@ fn main() {
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
             shader_program.use_program();
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
             gl::BindVertexArray(vaos[0]);
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
         }
 
         window.swap_buffers();
