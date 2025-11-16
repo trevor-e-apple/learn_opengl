@@ -4,6 +4,7 @@ use std::{ffi::c_void, path::Path};
 
 use glad_gl::gl::{self, GLuint};
 use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
+use image::ImageReader;
 
 use crate::shader::ShaderProgram;
 
@@ -93,6 +94,34 @@ fn main() {
             gl::EnableVertexAttribArray(1);
         }
         vaos
+    };
+
+    let texture_id = {
+        // Load the texture from memory
+        let texture_data = ImageReader::open("./data/container.jpg")
+            .unwrap()
+            .decode()
+            .unwrap();
+
+        // Generate an opengl texture
+        unsafe {
+            let mut texture_id: GLuint = 0;
+            gl::GenTextures(1, &mut texture_id as *mut GLuint);
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as i32,
+                texture_data.width() as i32,
+                texture_data.height() as i32,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                texture_data.as_bytes().as_ptr() as *const c_void,
+            );
+
+            texture_id
+        }
     };
 
     while !window.should_close() {
