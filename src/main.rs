@@ -2,7 +2,7 @@ mod shader;
 
 use std::{ffi::c_void, path::Path};
 
-use glad_gl::gl::{self, GLuint};
+use glad_gl::gl::{self, GLsizei, GLuint};
 use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
 use image::ImageReader;
 
@@ -92,7 +92,7 @@ fn main() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (8 * size_of::<f32>()) as i32,
+                (8 * size_of::<f32>()) as GLsizei,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
@@ -103,7 +103,7 @@ fn main() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (8 * size_of::<f32>()) as i32,
+                (8 * size_of::<f32>()) as GLsizei,
                 (3 * size_of::<f32>()) as *const c_void,
             );
             gl::EnableVertexAttribArray(1);
@@ -114,15 +114,15 @@ fn main() {
                 2,
                 gl::FLOAT,
                 gl::FALSE,
-                (8 * size_of::<f32>()) as i32,
+                (8 * size_of::<f32>()) as GLsizei,
                 (6 * size_of::<f32>()) as *const c_void,
             );
-            gl::EnableVertexAttribArray(1);
+            gl::EnableVertexAttribArray(2);
         }
         vaos
     };
 
-    let texture_id = {
+    let (texture_one_id, texture_two_id) = {
         // Load the texture from memory
         let texture_data = ImageReader::open("./data/container.jpg")
             .unwrap()
@@ -130,10 +130,19 @@ fn main() {
             .unwrap();
 
         // Generate an opengl texture
-        unsafe {
+        let texture_one_id = unsafe {
             let mut texture_id: GLuint = 0;
             gl::GenTextures(1, &mut texture_id as *mut GLuint);
             gl::BindTexture(gl::TEXTURE_2D, texture_id);
+
+            // set the wrapping parameters
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+
+            // Set the filtering parameters (minify and magnify)
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
@@ -145,10 +154,55 @@ fn main() {
                 gl::UNSIGNED_BYTE,
                 texture_data.as_bytes().as_ptr() as *const c_void,
             );
+            gl::GenerateMipmap(gl::TEXTURE_2D);
 
             texture_id
-        }
+        };
+
+        // Load the texture from memory
+        let texture_data = ImageReader::open("./data/awesomeface.png")
+            .unwrap()
+            .decode()
+            .unwrap();
+
+        // Generate an opengl texture
+        let texture_two_id = unsafe {
+            let mut texture_id: GLuint = 0;
+            gl::GenTextures(1, &mut texture_id as *mut GLuint);
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
+
+            // set the wrapping parameters
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+
+            // Set the filtering parameters (minify and magnify)
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGBA as i32,
+                texture_data.width() as i32,
+                texture_data.height() as i32,
+                0,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+                texture_data.as_bytes().as_ptr() as *const c_void,
+            );
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+            texture_id
+        };
+
+        (texture_one_id, texture_two_id)
     };
+
+    // Set texture uniforms
+    {
+        shader_program.use_program();
+        shader_program.set_int("texture1\0", 0);
+        shader_program.set_int("texture2\0", 1);
+    }
 
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
@@ -165,8 +219,14 @@ fn main() {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
 
+            // bind textures on corresponding texture units
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, texture_one_id);
+            gl::ActiveTexture(gl::TEXTURE1);
+            gl::BindTexture(gl::TEXTURE_2D, texture_two_id);
+
+            // Render
             shader_program.use_program();
-            gl::BindTexture(gl::TEXTURE_2D, texture_id);
             gl::BindVertexArray(vaos[0]);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
         }

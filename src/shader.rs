@@ -125,4 +125,13 @@ impl ShaderProgram {
     pub fn use_program(&self) {
         unsafe { gl::UseProgram(self.handle) }
     }
+
+    pub fn set_int(&self, name: &str, value: i32) {
+        unsafe {
+            gl::Uniform1i(
+                gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar),
+                value,
+            );
+        }
+    }
 }
