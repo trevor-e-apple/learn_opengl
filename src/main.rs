@@ -1,12 +1,14 @@
+mod matrix;
 mod shader;
+mod vector;
 
-use std::{ffi::c_void, path::Path};
+use std::{ffi::c_void, path::Path, time::Instant};
 
 use glad_gl::gl::{self, GLsizei, GLuint};
 use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
 use image::ImageReader;
 
-use crate::shader::ShaderProgram;
+use crate::{matrix::Matrix4, shader::ShaderProgram};
 
 fn main() {
     // Initialize GLFW and window
@@ -204,6 +206,7 @@ fn main() {
         shader_program.set_int("texture2\0", 1);
     }
 
+    let start = Instant::now();
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
             match event {
@@ -213,6 +216,17 @@ fn main() {
                 _ => {}
             }
         }
+
+        let transform = {
+            let milliseconds = Instant::now().duration_since(start).as_millis();
+            let transform = Matrix4::identity();
+            let transform = Matrix4::mult_mat4(
+                &transform,
+                &Matrix4::rotate_around_z(((2.0 * 3.14) * milliseconds as f32) / 1000.0),
+            );
+            let transform = Matrix4::mult_mat4(&transform, &Matrix4::scale(0.5, 0.5, 0.5));
+            transform
+        };
 
         unsafe {
             // clear the color buffer
@@ -227,6 +241,7 @@ fn main() {
 
             // Render
             shader_program.use_program();
+            shader_program.set_mat4("transform\0", &transform);
             gl::BindVertexArray(vaos[0]);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
         }

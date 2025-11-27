@@ -1,6 +1,8 @@
 use std::{fs::read_to_string, mem::zeroed, path::Path, ptr::null};
 
-use glad_gl::gl::{self, GLchar, GLsizei};
+use glad_gl::gl::{self, GLchar, GLfloat, GLsizei};
+
+use crate::matrix::Matrix4;
 
 pub struct ShaderProgram {
     handle: u32,
@@ -131,6 +133,17 @@ impl ShaderProgram {
             gl::Uniform1i(
                 gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar),
                 value,
+            );
+        }
+    }
+
+    pub fn set_mat4(&self, name: &str, value: &Matrix4) {
+        unsafe {
+            gl::UniformMatrix4fv(
+                gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar),
+                1,
+                gl::FALSE,
+                value.data.as_ptr() as *const GLfloat,
             );
         }
     }
