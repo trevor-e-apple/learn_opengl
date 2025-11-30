@@ -1,17 +1,25 @@
+mod math;
 mod matrix;
 mod shader;
 mod vector;
 
-use std::{ffi::c_void, path::Path, time::Instant};
+use std::{ffi::c_void, path::Path};
 
 use glad_gl::gl::{self, GLsizei, GLuint};
 use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
 use image::ImageReader;
 
-use crate::{matrix::Matrix4, shader::ShaderProgram};
+use crate::{
+    math::angle_to_rad,
+    matrix::{Matrix4, make_projection_matrix},
+    shader::ShaderProgram,
+    vector::Vector4,
+};
 
 fn main() {
     // Initialize GLFW and window
+    let width = 800;
+    let height = 600;
     let (mut glfw_data, mut window, events_receiver) = {
         let mut glfw_data = glfw::init_no_callbacks().unwrap();
 
@@ -22,7 +30,7 @@ fn main() {
 
         // Create a window object
         let (mut window, events_receiver) = glfw_data
-            .create_window(800, 600, "LearnOpenGL", WindowMode::Windowed)
+            .create_window(width, height, "LearnOpenGL", WindowMode::Windowed)
             .unwrap();
 
         window.make_current();
@@ -32,7 +40,7 @@ fn main() {
 
         // Set up viewport
         unsafe {
-            gl::Viewport(0, 0, 800, 600);
+            gl::Viewport(0, 0, width as i32, height as i32);
         }
 
         (glfw_data, window, events_receiver)
@@ -206,7 +214,14 @@ fn main() {
         shader_program.set_int("texture2\0", 1);
     }
 
-    let start = Instant::now();
+    // Projection transform
+    let projection = make_projection_matrix(
+        angle_to_rad(45.0),
+        (width as f32) / (height as f32),
+        0.1,
+        100.0,
+    );
+
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
             match event {
@@ -217,15 +232,28 @@ fn main() {
             }
         }
 
-        let transform = {
-            let milliseconds = Instant::now().duration_since(start).as_millis();
-            let transform = Matrix4::identity();
-            let transform = Matrix4::mult_mat4(
-                &transform,
-                &Matrix4::rotate_around_z(((2.0 * 3.14) * milliseconds as f32) / 1000.0),
-            );
-            let transform = Matrix4::mult_mat4(&transform, &Matrix4::scale(0.5, 0.5, 0.5));
-            transform
+        let view = Matrix4::translate(0.0, 0.0, -3.0);
+
+        let model = {
+            let model = Matrix4::identity();
+
+            let model = Matrix4::mult_mat4(&model, &Matrix4::rotate_around_x(angle_to_rad(-55.0)));
+
+            model
+        };
+
+        let blah = {
+            let blah = Vector4 {
+                x: 0.5,
+                y: 0.5,
+                z: 0.0,
+                w: 1.0,
+            };
+
+            let blah = Matrix4::mult_vector(&model, &blah);
+            let blah = Matrix4::mult_vector(&view, &blah);
+            let blah = Matrix4::mult_vector(&projection, &blah);
+            blah
         };
 
         unsafe {
@@ -241,7 +269,9 @@ fn main() {
 
             // Render
             shader_program.use_program();
-            shader_program.set_mat4("transform\0", &transform);
+            shader_program.set_mat4("model\0", &model);
+            shader_program.set_mat4("view\0", &view);
+            shader_program.set_mat4("projection\0", &projection);
             gl::BindVertexArray(vaos[0]);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
         }

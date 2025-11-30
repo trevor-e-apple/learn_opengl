@@ -138,3 +138,16 @@ impl Matrix4 {
         }
     }
 }
+
+pub fn make_projection_matrix(fov: f32, aspect: f32, znear: f32, zfar: f32) -> Matrix4 {
+    let mut result = Matrix4::zero();
+
+    let tan_half_fov = (fov / 2.0).tan();
+    result.data[0][0] = 1.0 / (aspect * tan_half_fov);
+    result.data[1][1] = 1.0 / tan_half_fov;
+    result.data[2][2] = -1.0 * (zfar + znear) / (zfar - znear);
+    result.data[2][3] = -1.0 * (2.0 * zfar * znear) / (zfar - znear);
+    result.data[3][2] = -1.0;
+
+    result
+}
