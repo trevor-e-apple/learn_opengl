@@ -142,12 +142,7 @@ impl ShaderProgram {
             let location = gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar);
             let error = gl::GetError();
             assert_eq!(error, 0);
-            gl::UniformMatrix4fv(
-                location,
-                1,
-                gl::FALSE,
-                value.data.as_ptr() as *const GLfloat,
-            );
+            gl::UniformMatrix4fv(location, 1, gl::TRUE, value.data.as_ptr() as *const GLfloat);
             let error = gl::GetError();
             assert_eq!(error, 0);
         }
