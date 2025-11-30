@@ -242,20 +242,6 @@ fn main() {
             model
         };
 
-        let blah = {
-            let blah = Vector4 {
-                x: 0.5,
-                y: 0.5,
-                z: 0.0,
-                w: 1.0,
-            };
-
-            let blah = Matrix4::mult_vector(&model, &blah);
-            let blah = Matrix4::mult_vector(&view, &blah);
-            let blah = Matrix4::mult_vector(&projection, &blah);
-            blah
-        };
-
         unsafe {
             // clear the color buffer
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
