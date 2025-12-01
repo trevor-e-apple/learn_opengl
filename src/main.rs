@@ -3,7 +3,7 @@ mod matrix;
 mod shader;
 mod vector;
 
-use std::{ffi::c_void, path::Path};
+use std::{ffi::c_void, path::Path, time::Instant};
 
 use glad_gl::gl::{self, GLsizei, GLuint};
 use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, WindowMode};
@@ -41,6 +41,7 @@ fn main() {
         // Set up viewport
         unsafe {
             gl::Viewport(0, 0, width as i32, height as i32);
+            gl::Enable(gl::DEPTH_TEST);
         }
 
         (glfw_data, window, events_receiver)
@@ -51,16 +52,22 @@ fn main() {
         ShaderProgram::new(Path::new("./src/shader.vs"), Path::new("./src/shader.fs"));
 
     // Vertex input
-    let triangle_one: [f32; 32] = [
-        // 3 position, 3 color, 2 texture coordinates
-        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom left
-        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top left
+    let triangle_one: [f32; 180] = [
+        -0.5, -0.5, -0.5, 0.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.5, 0.5, -0.5, 1.0, 1.0, 0.5, 0.5,
+        -0.5, 1.0, 1.0, -0.5, 0.5, -0.5, 0.0, 1.0, -0.5, -0.5, -0.5, 0.0, 0.0, -0.5, -0.5, 0.5,
+        0.0, 0.0, 0.5, -0.5, 0.5, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 1.0, -0.5,
+        0.5, 0.5, 0.0, 1.0, -0.5, -0.5, 0.5, 0.0, 0.0, -0.5, 0.5, 0.5, 1.0, 0.0, -0.5, 0.5, -0.5,
+        1.0, 1.0, -0.5, -0.5, -0.5, 0.0, 1.0, -0.5, -0.5, -0.5, 0.0, 1.0, -0.5, -0.5, 0.5, 0.0,
+        0.0, -0.5, 0.5, 0.5, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.5, 0.5, -0.5, 1.0, 1.0, 0.5,
+        -0.5, -0.5, 0.0, 1.0, 0.5, -0.5, -0.5, 0.0, 1.0, 0.5, -0.5, 0.5, 0.0, 0.0, 0.5, 0.5, 0.5,
+        1.0, 0.0, -0.5, -0.5, -0.5, 0.0, 1.0, 0.5, -0.5, -0.5, 1.0, 1.0, 0.5, -0.5, 0.5, 1.0, 0.0,
+        0.5, -0.5, 0.5, 1.0, 0.0, -0.5, -0.5, 0.5, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, 1.0, -0.5, 0.5,
+        -0.5, 0.0, 1.0, 0.5, 0.5, -0.5, 1.0, 1.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0,
+        -0.5, 0.5, 0.5, 0.0, 0.0, -0.5, 0.5, -0.5, 0.0, 1.0,
     ];
-    let indices: [i32; 6] = [
-        0, 1, 3, // first triangle
-        1, 2, 3, // second triangle
+    let indices: [i32; 36] = [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+        25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
     ];
     let vaos = {
         let mut vbos: [GLuint; 2] = [0, 0];
@@ -102,32 +109,21 @@ fn main() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (8 * size_of::<f32>()) as GLsizei,
+                (5 * size_of::<f32>()) as GLsizei,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
 
-            // color attribute
+            // texture attribute
             gl::VertexAttribPointer(
                 1,
-                3,
+                2,
                 gl::FLOAT,
                 gl::FALSE,
-                (8 * size_of::<f32>()) as GLsizei,
+                (5 * size_of::<f32>()) as GLsizei,
                 (3 * size_of::<f32>()) as *const c_void,
             );
             gl::EnableVertexAttribArray(1);
-
-            // texture attribute
-            gl::VertexAttribPointer(
-                2,
-                2,
-                gl::FLOAT,
-                gl::FALSE,
-                (8 * size_of::<f32>()) as GLsizei,
-                (6 * size_of::<f32>()) as *const c_void,
-            );
-            gl::EnableVertexAttribArray(2);
         }
         vaos
     };
@@ -222,6 +218,7 @@ fn main() {
         100.0,
     );
 
+    let time_start = Instant::now();
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
             match event {
@@ -232,12 +229,17 @@ fn main() {
             }
         }
 
+        let millis_since = Instant::now().duration_since(time_start).as_millis() as f32;
+
         let view = Matrix4::translate(0.0, 0.0, -3.0);
 
         let model = {
             let model = Matrix4::identity();
 
-            let model = Matrix4::mult_mat4(&model, &Matrix4::rotate_around_x(angle_to_rad(-55.0)));
+            let model = Matrix4::mult_mat4(
+                &model,
+                &Matrix4::rotate_around_x(6.18 * millis_since / 1000.0),
+            );
 
             model
         };
@@ -245,7 +247,7 @@ fn main() {
         unsafe {
             // clear the color buffer
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
             // bind textures on corresponding texture units
             gl::ActiveTexture(gl::TEXTURE0);
@@ -259,7 +261,7 @@ fn main() {
             shader_program.set_mat4("view\0", &view);
             shader_program.set_mat4("projection\0", &projection);
             gl::BindVertexArray(vaos[0]);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0 as *const c_void);
+            gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
         }
 
         window.swap_buffers();
