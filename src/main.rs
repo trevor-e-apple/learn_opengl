@@ -13,7 +13,7 @@ use crate::{
     math::angle_to_rad,
     matrix::{Matrix4, make_projection_matrix},
     shader::ShaderProgram,
-    vector::Vector4,
+    vector::{Vector3, Vector4},
 };
 
 fn main() {
@@ -218,6 +218,59 @@ fn main() {
         100.0,
     );
 
+    let cube_positions = [
+        Vector3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        Vector3 {
+            x: 2.0,
+            y: 5.0,
+            z: -15.0,
+        },
+        Vector3 {
+            x: -1.5,
+            y: -2.2,
+            z: -2.5,
+        },
+        Vector3 {
+            x: -3.8,
+            y: -2.0,
+            z: -12.3,
+        },
+        Vector3 {
+            x: 2.4,
+            y: -0.4,
+            z: -3.5,
+        },
+        Vector3 {
+            x: -1.7,
+            y: 3.0,
+            z: -7.5,
+        },
+        Vector3 {
+            x: 1.3,
+            y: -2.0,
+            z: -2.5,
+        },
+        Vector3 {
+            x: 1.5,
+            y: 2.0,
+            z: 2.5,
+        },
+        Vector3 {
+            x: 1.5,
+            y: 0.2,
+            z: -1.5,
+        },
+        Vector3 {
+            x: -1.3,
+            y: 1.0,
+            z: -1.5,
+        },
+    ];
+
     let time_start = Instant::now();
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
@@ -231,18 +284,8 @@ fn main() {
 
         let millis_since = Instant::now().duration_since(time_start).as_millis() as f32;
 
+        // The view matrix is constant across all models
         let view = Matrix4::translate(0.0, 0.0, -3.0);
-
-        let model = {
-            let model = Matrix4::identity();
-
-            let model = Matrix4::mult_mat4(
-                &model,
-                &Matrix4::rotate_around_x(6.18 * millis_since / 1000.0),
-            );
-
-            model
-        };
 
         unsafe {
             // clear the color buffer
@@ -256,12 +299,29 @@ fn main() {
             gl::BindTexture(gl::TEXTURE_2D, texture_two_id);
 
             // Render
-            shader_program.use_program();
-            shader_program.set_mat4("model\0", &model);
-            shader_program.set_mat4("view\0", &view);
-            shader_program.set_mat4("projection\0", &projection);
-            gl::BindVertexArray(vaos[0]);
-            gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
+            for (cube_index, cube_position) in cube_positions.iter().enumerate() {
+                let transform = {
+                    // World transforms
+                    let transform =
+                        Matrix4::translate(cube_position.x, cube_position.y, cube_position.z);
+
+                    // Model transforms
+                    let rotation = 20.0 * (cube_index as f32) + millis_since;
+                    let period = 2000.0; // in ms
+                    let transform = Matrix4::mult_mat4(
+                        &transform,
+                        &Matrix4::rotate_around_x(6.18 * rotation / period),
+                    );
+
+                    transform
+                };
+                shader_program.use_program();
+                shader_program.set_mat4("model\0", &transform);
+                shader_program.set_mat4("view\0", &view);
+                shader_program.set_mat4("projection\0", &projection);
+                gl::BindVertexArray(vaos[0]);
+                gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
+            }
         }
 
         window.swap_buffers();
