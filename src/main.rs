@@ -1,3 +1,4 @@
+mod camera;
 mod math;
 mod matrix;
 mod shader;
@@ -10,10 +11,11 @@ use glfw::{self, Context, Key, OpenGlProfileHint, WindowEvent, WindowHint, Windo
 use image::ImageReader;
 
 use crate::{
+    camera::Camera,
     math::angle_to_rad,
     matrix::{Matrix4, make_projection_matrix},
     shader::ShaderProgram,
-    vector::{Vector3, Vector4},
+    vector::Vector3,
 };
 
 fn main() {
@@ -271,6 +273,9 @@ fn main() {
         },
     ];
 
+    let mut camera = Camera::new();
+    camera.position.z = 3.0;
+
     let time_start = Instant::now();
     while !window.should_close() {
         for (_, event) in glfw::flush_messages(&events_receiver) {
@@ -284,8 +289,23 @@ fn main() {
 
         let millis_since = Instant::now().duration_since(time_start).as_millis() as f32;
 
-        // The view matrix is constant across all models
-        let view = Matrix4::translate(0.0, 0.0, -3.0);
+        // Update Camera
+        let view = {
+            camera.target = Vector3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            };
+            let orbit_radius = 20.0;
+            let period = 10_000.0;
+            camera.position = Vector3 {
+                x: orbit_radius * (6.18 * millis_since / period).cos(),
+                y: 0.0,
+                z: orbit_radius * (6.18 * millis_since / period).sin(),
+            };
+
+            camera.view_matrix()
+        };
 
         unsafe {
             // clear the color buffer
