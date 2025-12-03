@@ -2,7 +2,7 @@ use std::{fs::read_to_string, mem::zeroed, path::Path, ptr::null};
 
 use glad_gl::gl::{self, GLchar, GLfloat, GLsizei};
 
-use crate::matrix::Matrix4;
+use crate::{matrix::Matrix4, vector::Vector3};
 
 pub struct ShaderProgram {
     handle: u32,
@@ -133,6 +133,17 @@ impl ShaderProgram {
             gl::Uniform1i(
                 gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar),
                 value,
+            );
+        }
+    }
+
+    pub fn set_vec3(&self, name: &str, value: &Vector3) {
+        unsafe {
+            gl::Uniform3f(
+                gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar),
+                value.x,
+                value.y,
+                value.z,
             );
         }
     }
