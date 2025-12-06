@@ -382,23 +382,29 @@ fn scene_two() {
 
     // TODO: register resize callback
     let shader_program = ShaderProgram::new(
-        Path::new("./src/shader.vs"),
+        Path::new("./src/light_shader.vs"),
         Path::new("./src/light_shader.fs"),
     );
     let light_source_shader_program = ShaderProgram::new(
-        Path::new("./src/shader.vs"),
+        Path::new("./src/light_shader.vs"),
         Path::new("./src/light_source_shader.fs"),
     );
 
     // Vertex input
-    let cube_vertices: [f32; 108] = [
-        -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5,
-        -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
-        -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5,
-        -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5,
-        0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,
-        -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
-        0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5,
+    let cube_vertices: [f32; 216] = [
+        -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.5, 0.5, -0.5, 0.0,
+        0.0, -1.0, 0.5, 0.5, -0.5, 0.0, 0.0, -1.0, -0.5, 0.5, -0.5, 0.0, 0.0, -1.0, -0.5, -0.5,
+        -0.5, 0.0, 0.0, -1.0, -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.5,
+        0.5, 0.5, 0.0, 0.0, 1.0, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, -0.5, 0.5, 0.5, 0.0, 0.0, 1.0, -0.5,
+        -0.5, 0.5, 0.0, 0.0, 1.0, -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, -0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, -0.5, -0.5, 0.5, -1.0,
+        0.0, 0.0, -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.5, 0.5, -0.5,
+        1.0, 0.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5,
+        0.5, 1.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.5,
+        -0.5, -0.5, 0.0, -1.0, 0.0, 0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
+        -0.5, -0.5, 0.5, 0.0, -1.0, 0.0, -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, -0.5, 0.5, -0.5, 0.0,
+        1.0, 0.0, 0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 0.0,
+        1.0, 0.0, -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, -0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
     ];
     let indices: [i32; 36] = [
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
@@ -444,10 +450,21 @@ fn scene_two() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (3 * size_of::<f32>()) as GLsizei,
+                (6 * size_of::<f32>()) as GLsizei,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
+
+            // normals attribute
+            gl::VertexAttribPointer(
+                1,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                (6 * size_of::<f32>()) as GLsizei,
+                (3 * size_of::<f32>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(1);
         }
 
         unsafe {
@@ -468,7 +485,7 @@ fn scene_two() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                3 * size_of::<f32>() as GLsizei,
+                6 * size_of::<f32>() as GLsizei,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
@@ -485,9 +502,9 @@ fn scene_two() {
     );
 
     let light_pos = Vector3 {
-        x: 1.2,
+        x: 1.5,
         y: 1.0,
-        z: -2.0,
+        z: 3.0,
     };
     let cube_pos = Vector3 {
         x: 0.0,
@@ -518,9 +535,9 @@ fn scene_two() {
                 z: 0.0,
             };
             camera.position = Vector3 {
-                x: 0.0,
+                x: 2.5,
                 y: 0.0,
-                z: 3.0,
+                z: 5.0,
             };
 
             camera.view_matrix()
@@ -540,10 +557,10 @@ fn scene_two() {
                     let transform = Matrix4::translate(cube_pos.x, cube_pos.y, cube_pos.z);
 
                     // Model transforms
-                    let period = 2000.0; // in ms
+                    let period = 3000.0; // in ms
                     let rotation = 6.18 * millis_since / period;
                     let transform =
-                        Matrix4::mult_mat4(&transform, &Matrix4::rotate_around_x(rotation));
+                        Matrix4::mult_mat4(&transform, &Matrix4::rotate_around_y(rotation));
 
                     transform
                 };
@@ -561,12 +578,13 @@ fn scene_two() {
                 );
                 shader_program.set_vec3(
                     "lightColor\0",
-                    &&Vector3 {
+                    &Vector3 {
                         x: 1.0,
                         y: 1.0,
                         z: 1.0,
                     },
                 );
+                shader_program.set_vec3("lightPos\0", &light_pos);
                 gl::BindVertexArray(vaos[0]);
                 gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
             }
