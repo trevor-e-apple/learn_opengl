@@ -586,6 +586,7 @@ fn scene_two() {
                     },
                 );
                 shader_program.set_vec3("lightPos\0", &light_pos);
+                shader_program.set_vec3("viewPos\0", &camera.position);
                 gl::BindVertexArray(vaos[0]);
                 gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
             }
