@@ -27,6 +27,18 @@ impl Matrix4 {
         }
     }
 
+    pub fn transpose(&self) -> Self {
+        let mut data: [[f32; 4]; 4] = [[0.0; 4]; 4];
+
+        for i in 0..4 {
+            for j in 0..4 {
+                data[i][j] = self.data[j][i];
+            }
+        }
+
+        Self { data }
+    }
+
     pub fn scale(x: f32, y: f32, z: f32) -> Self {
         Self {
             data: [

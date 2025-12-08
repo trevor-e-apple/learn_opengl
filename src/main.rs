@@ -564,6 +564,7 @@ fn scene_two() {
 
                     transform
                 };
+
                 shader_program.use_program();
                 shader_program.set_mat4("model\0", &transform);
                 shader_program.set_mat4("view\0", &view);
