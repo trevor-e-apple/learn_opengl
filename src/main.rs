@@ -502,7 +502,7 @@ fn scene_two() {
     );
 
     let light_pos = Vector3 {
-        x: 1.5,
+        x: 2.5,
         y: 1.0,
         z: 3.0,
     };
@@ -569,8 +569,36 @@ fn scene_two() {
                 shader_program.set_mat4("model\0", &transform);
                 shader_program.set_mat4("view\0", &view);
                 shader_program.set_mat4("projection\0", &projection);
+
                 shader_program.set_vec3(
-                    "objectColor\0",
+                    "light.ambient\0",
+                    &Vector3 {
+                        x: 0.2,
+                        y: 0.2,
+                        z: 0.2,
+                    },
+                );
+                shader_program.set_vec3(
+                    "light.diffuse\0",
+                    &Vector3 {
+                        x: 0.5,
+                        y: 0.5,
+                        z: 0.5,
+                    },
+                );
+                shader_program.set_vec3(
+                    "light.specular\0",
+                    &Vector3 {
+                        x: 1.0,
+                        y: 1.0,
+                        z: 1.0,
+                    },
+                );
+                shader_program.set_vec3("light.position\0", &light_pos);
+
+                shader_program.set_vec3("viewPos\0", &camera.position);
+                shader_program.set_vec3(
+                    "material.ambient\0",
                     &Vector3 {
                         x: 1.0,
                         y: 0.5,
@@ -578,15 +606,22 @@ fn scene_two() {
                     },
                 );
                 shader_program.set_vec3(
-                    "lightColor\0",
+                    "material.diffuse\0",
                     &Vector3 {
                         x: 1.0,
-                        y: 1.0,
-                        z: 1.0,
+                        y: 0.5,
+                        z: 0.31,
                     },
                 );
-                shader_program.set_vec3("lightPos\0", &light_pos);
-                shader_program.set_vec3("viewPos\0", &camera.position);
+                shader_program.set_vec3(
+                    "material.specular\0",
+                    &Vector3 {
+                        x: 0.5,
+                        y: 0.5,
+                        z: 0.5,
+                    },
+                );
+                shader_program.set_float("material.shininess\0", 32.0);
                 gl::BindVertexArray(vaos[0]);
                 gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
             }

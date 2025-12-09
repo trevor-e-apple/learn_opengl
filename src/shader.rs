@@ -137,6 +137,15 @@ impl ShaderProgram {
         }
     }
 
+    pub fn set_float(&self, name: &str, value: f32) {
+        unsafe {
+            gl::Uniform1f(
+                gl::GetUniformLocation(self.handle, name.as_ptr() as *const GLchar),
+                value,
+            );
+        }
+    }
+
     pub fn set_vec3(&self, name: &str, value: &Vector3) {
         unsafe {
             gl::Uniform3f(
