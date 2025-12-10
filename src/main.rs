@@ -391,20 +391,24 @@ fn scene_two() {
     );
 
     // Vertex input
-    let cube_vertices: [f32; 216] = [
-        -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.5, 0.5, -0.5, 0.0,
-        0.0, -1.0, 0.5, 0.5, -0.5, 0.0, 0.0, -1.0, -0.5, 0.5, -0.5, 0.0, 0.0, -1.0, -0.5, -0.5,
-        -0.5, 0.0, 0.0, -1.0, -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.5,
-        0.5, 0.5, 0.0, 0.0, 1.0, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, -0.5, 0.5, 0.5, 0.0, 0.0, 1.0, -0.5,
-        -0.5, 0.5, 0.0, 0.0, 1.0, -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, -0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
-        -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, -0.5, -0.5, 0.5, -1.0,
-        0.0, 0.0, -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.5, 0.5, -0.5,
-        1.0, 0.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5,
-        0.5, 1.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.5,
-        -0.5, -0.5, 0.0, -1.0, 0.0, 0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-        -0.5, -0.5, 0.5, 0.0, -1.0, 0.0, -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, -0.5, 0.5, -0.5, 0.0,
-        1.0, 0.0, 0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 0.0,
-        1.0, 0.0, -0.5, 0.5, 0.5, 0.0, 1.0, 0.0, -0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
+    let cube_vertices: [f32; 288] = [
+        -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0, 0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 0.0, 0.5,
+        0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0, 0.5, 0.5, -0.5, 0.0, 0.0, -1.0, 1.0, 1.0, -0.5, 0.5,
+        -0.5, 0.0, 0.0, -1.0, 0.0, 1.0, -0.5, -0.5, -0.5, 0.0, 0.0, -1.0, 0.0, 0.0, -0.5, -0.5,
+        0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 0.0, 0.5, 0.5, 0.5, 0.0,
+        0.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, -0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
+        0.0, 1.0, -0.5, -0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 1.0,
+        0.0, -0.5, 0.5, -0.5, -1.0, 0.0, 0.0, 1.0, 1.0, -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, 0.0, 1.0,
+        -0.5, -0.5, -0.5, -1.0, 0.0, 0.0, 0.0, 1.0, -0.5, -0.5, 0.5, -1.0, 0.0, 0.0, 0.0, 0.0,
+        -0.5, 0.5, 0.5, -1.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.5, 0.5,
+        -0.5, 1.0, 0.0, 0.0, 1.0, 1.0, 0.5, -0.5, -0.5, 1.0, 0.0, 0.0, 0.0, 1.0, 0.5, -0.5, -0.5,
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.5, -0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 1.0, 0.0,
+        0.0, 1.0, 0.0, -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.0, 1.0, 0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
+        1.0, 1.0, 0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 1.0, 0.0, 0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 1.0,
+        0.0, -0.5, -0.5, 0.5, 0.0, -1.0, 0.0, 0.0, 0.0, -0.5, -0.5, -0.5, 0.0, -1.0, 0.0, 0.0, 1.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 0.5,
+        0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0, -0.5, 0.5, 0.5,
+        0.0, 1.0, 0.0, 0.0, 0.0, -0.5, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0,
     ];
     let indices: [i32; 36] = [
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
@@ -450,7 +454,7 @@ fn scene_two() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (6 * size_of::<f32>()) as GLsizei,
+                (8 * size_of::<f32>()) as GLsizei,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
@@ -461,10 +465,21 @@ fn scene_two() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                (6 * size_of::<f32>()) as GLsizei,
+                (8 * size_of::<f32>()) as GLsizei,
                 (3 * size_of::<f32>()) as *const c_void,
             );
             gl::EnableVertexAttribArray(1);
+
+            // texture coordinates
+            gl::VertexAttribPointer(
+                2,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                (8 * size_of::<f32>()) as GLsizei,
+                (6 * size_of::<f32>()) as *const c_void,
+            );
+            gl::EnableVertexAttribArray(2);
         }
 
         unsafe {
@@ -485,12 +500,50 @@ fn scene_two() {
                 3,
                 gl::FLOAT,
                 gl::FALSE,
-                6 * size_of::<f32>() as GLsizei,
+                8 * size_of::<f32>() as GLsizei,
                 0 as *const c_void,
             );
             gl::EnableVertexAttribArray(0);
         }
         vaos
+    };
+
+    let texture_one_id = {
+        // Load the texture from memory
+        let texture_data = ImageReader::open("./data/container.jpg")
+            .unwrap()
+            .decode()
+            .unwrap();
+
+        // Generate an opengl texture
+        unsafe {
+            let mut texture_id: GLuint = 0;
+            gl::GenTextures(1, &mut texture_id as *mut GLuint);
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
+
+            // set the wrapping parameters
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+
+            // Set the filtering parameters (minify and magnify)
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as i32,
+                texture_data.width() as i32,
+                texture_data.height() as i32,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                texture_data.as_bytes().as_ptr() as *const c_void,
+            );
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+
+            texture_id
+        }
     };
 
     // Projection transform
@@ -552,6 +605,10 @@ fn scene_two() {
 
             // Other cube
             {
+                // bind textures on corresponding texture units
+                gl::ActiveTexture(gl::TEXTURE0);
+                gl::BindTexture(gl::TEXTURE_2D, texture_one_id);
+
                 let transform = {
                     // World transforms
                     let transform = Matrix4::translate(cube_pos.x, cube_pos.y, cube_pos.z);
@@ -597,22 +654,7 @@ fn scene_two() {
                 shader_program.set_vec3("light.position\0", &light_pos);
 
                 shader_program.set_vec3("viewPos\0", &camera.position);
-                shader_program.set_vec3(
-                    "material.ambient\0",
-                    &Vector3 {
-                        x: 1.0,
-                        y: 0.5,
-                        z: 0.31,
-                    },
-                );
-                shader_program.set_vec3(
-                    "material.diffuse\0",
-                    &Vector3 {
-                        x: 1.0,
-                        y: 0.5,
-                        z: 0.31,
-                    },
-                );
+                shader_program.set_int("material.diffuse\0", 0);
                 shader_program.set_vec3(
                     "material.specular\0",
                     &Vector3 {
