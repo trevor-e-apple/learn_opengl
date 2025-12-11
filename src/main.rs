@@ -508,15 +508,15 @@ fn scene_two() {
         vaos
     };
 
-    let texture_one_id = {
+    let (texture_one_id, texture_two_id) = {
         // Load the texture from memory
-        let texture_data = ImageReader::open("./data/container.jpg")
+        let texture_data = ImageReader::open("./data/container2.jpg")
             .unwrap()
             .decode()
             .unwrap();
 
         // Generate an opengl texture
-        unsafe {
+        let texture_one_id = unsafe {
             let mut texture_id: GLuint = 0;
             gl::GenTextures(1, &mut texture_id as *mut GLuint);
             gl::BindTexture(gl::TEXTURE_2D, texture_id);
@@ -543,7 +543,44 @@ fn scene_two() {
             gl::GenerateMipmap(gl::TEXTURE_2D);
 
             texture_id
-        }
+        };
+
+        let texture_data = ImageReader::open("./data/container2_specular.jpg")
+            .unwrap()
+            .decode()
+            .unwrap();
+
+        // Generate an opengl texture
+        let texture_two_id = unsafe {
+            let mut texture_id: GLuint = 0;
+            gl::GenTextures(1, &mut texture_id as *mut GLuint);
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
+
+            // set the wrapping parameters
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT as i32);
+
+            // Set the filtering parameters (minify and magnify)
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as i32,
+                texture_data.width() as i32,
+                texture_data.height() as i32,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                texture_data.as_bytes().as_ptr() as *const c_void,
+            );
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+
+            texture_id
+        };
+
+        (texture_one_id, texture_two_id)
     };
 
     // Projection transform
@@ -608,6 +645,8 @@ fn scene_two() {
                 // bind textures on corresponding texture units
                 gl::ActiveTexture(gl::TEXTURE0);
                 gl::BindTexture(gl::TEXTURE_2D, texture_one_id);
+                gl::ActiveTexture(gl::TEXTURE1);
+                gl::BindTexture(gl::TEXTURE_2D, texture_two_id);
 
                 let transform = {
                     // World transforms
@@ -654,15 +693,8 @@ fn scene_two() {
                 shader_program.set_vec3("light.position\0", &light_pos);
 
                 shader_program.set_vec3("viewPos\0", &camera.position);
-                shader_program.set_int("material.diffuse\0", 0);
-                shader_program.set_vec3(
-                    "material.specular\0",
-                    &Vector3 {
-                        x: 0.5,
-                        y: 0.5,
-                        z: 0.5,
-                    },
-                );
+                shader_program.set_int("material.diffuse\0", 0); // NOTE: this argument is the texture index, not the texture ID
+                shader_program.set_int("material.specular\0", 1);
                 shader_program.set_float("material.shininess\0", 32.0);
                 gl::BindVertexArray(vaos[0]);
                 gl::DrawElements(gl::TRIANGLES, 36, gl::UNSIGNED_INT, 0 as *const c_void);
